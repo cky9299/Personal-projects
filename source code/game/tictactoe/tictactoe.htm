@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>tictactoe</title>
+<!--use px instead of % so dat can resize using zoom-->
+<style>
+.grid-container {
+  display: grid;
+  grid: 140px 140px 140px / 140px 140px 140px;/*row / column*/
+  grid-gap: 1px;
+  background-color: #2196F3;
+  padding: 2px;/*outer box line thickness*/
+  width: 422px;
+}
+
+.grid-container > div {
+  background-color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  padding: 55px 0;/*ensure ele 70px from top ie center*/
+  font-size: 30px;
+}
+</style>
+<audio id='invalid'>
+  <source src="sounds/badmove.ogg" type="audio/ogg">
+  Your browser does not support the audio element.
+</audio>
+
+<audio id='leg'>
+  <source src="sounds/legendary.wav" type="audio/wav">
+</audio>
+
+<audio id='Mo'>
+  <source src="sounds/butterfly_appear.wav" type="audio/wav">
+</audio>
+
+<audio id='Dr'>
+  <source src="sounds/button_mouseleave.wav" type="audio/wav">
+</audio>
+
+<audio id='Rep'>
+  <source src="sounds/replay_popup.wav" type="audio/wav">
+</audio>
+</head>
+
+<body><!--make a reset btn,symbol right of board-->
+<div class="grid-container"><!--default populate row by row eg 0 1 2-->
+    <div data-cell-index="0" class="cell"></div>
+    <div data-cell-index="1" class="cell"></div>
+    <div data-cell-index="2" class="cell"></div>
+    <div data-cell-index="3" class="cell"></div>
+    <div data-cell-index="4" class="cell"></div>
+    <div data-cell-index="5" class="cell"></div>
+    <div data-cell-index="6" class="cell"></div>
+    <div data-cell-index="7" class="cell"></div>
+    <div data-cell-index="8" class="cell"></div>
+</div>
+<button onclick='Reset()'>Reset</button><!--style='display:inline-block;'-->
+<p id='turn'>O turn</p>
+<p id='mov'></p>
+
+<script>
+Dgetidmov=document.getElementById('mov');
+DgetidTurn=document.getElementById('turn')
+PlayerTurn='O';
+
+function Move(e) {
+    const clickedCell = e.target;
+    const IndexAttr = clickedCell.getAttribute('data-cell-index');
+    ClassToSelect = "[data-cell-index='" + IndexAttr + "']";
+    const DqsItemNo = document.querySelector(ClassToSelect);//'[data-cell-index="box1"]'
+    
+    const ItemNumber = parseInt(IndexAttr);
+    ItemColumnNo=ItemNumber%3;//this func shortens all func so can juts call one line
+    ItemRowNo=Math.floor(ItemNumber/3);
+    isWon=false;
+
+    
+    if (DqsItemNo.innerHTML=='')
+    {
+        document.getElementById('Mo').play();
+        DqsItemNo.innerHTML=PlayerTurn;
+        //get x o from board
+        classArr=[];
+
+        for (i=0;i<9;i++)
+        {
+            NewClassToSelect = "[data-cell-index='" + i + "']";
+            classArr.push(document.querySelector(NewClassToSelect).innerHTML);
+        }
+        //document.querySelectorAll('[data-cell-index]').forEach(ele => classArr.push(ele));//get all div wrong
+        
+        temp1d=[];
+        class2d=[];
+        for (j=0;j<3;j++)
+        {
+            for (i=0;i<3;i++)
+            {
+                temp1d.push(classArr[3*j+i]);//for each row
+            }
+            class2d.push(temp1d);
+            temp1d=[];
+        }
+
+        if (ItemColumnNo==0)
+        {
+            if (class2d[ItemRowNo][ItemColumnNo]==PlayerTurn && class2d[ItemRowNo][ItemColumnNo+1]==PlayerTurn &&
+                class2d[ItemRowNo][ItemColumnNo+2]==PlayerTurn)
+            {
+                EndGame(PlayerTurn);
+            }
+        }
+        else if (ItemColumnNo == 1)//to account for boards of all sizes using if (ItemColumnNo>0 || ItemColumnNo<noColumns-1)
+        {
+            if (class2d[ItemRowNo][ItemColumnNo-1]==PlayerTurn && class2d[ItemRowNo][ItemColumnNo]==PlayerTurn &&
+                class2d[ItemRowNo][ItemColumnNo+1]==PlayerTurn)
+            {
+                EndGame(PlayerTurn);
+            }
+        }
+        else if (ItemColumnNo==2)
+        {
+            if (class2d[ItemRowNo][ItemColumnNo-1]==PlayerTurn && class2d[ItemRowNo][ItemColumnNo]==PlayerTurn &&
+                class2d[ItemRowNo][ItemColumnNo-2]==PlayerTurn)
+            {
+                EndGame(PlayerTurn);
+            }
+        }
+        else console.log('ItemColumnNo out of range');
+        //check vertical win
+        if (ItemRowNo==0)
+        {
+            if (class2d[ItemRowNo][ItemColumnNo]==PlayerTurn && class2d[ItemRowNo+1][ItemColumnNo]==PlayerTurn &&
+                class2d[ItemRowNo+2][ItemColumnNo]==PlayerTurn)
+            {
+                EndGame(PlayerTurn);
+            }
+        }
+        else if (ItemRowNo==1)
+        {
+            if (class2d[ItemRowNo-1][ItemColumnNo]==PlayerTurn && class2d[ItemRowNo][ItemColumnNo]==PlayerTurn &&
+                class2d[ItemRowNo+1][ItemColumnNo]==PlayerTurn)
+            {
+                EndGame(PlayerTurn);
+            }
+        }
+        else if (ItemRowNo==2)
+        {
+            if (class2d[ItemRowNo-1][ItemColumnNo]==PlayerTurn && class2d[ItemRowNo][ItemColumnNo]==PlayerTurn &&
+                class2d[ItemRowNo-2][ItemColumnNo]==PlayerTurn)
+            {
+                EndGame(PlayerTurn);
+            }
+        }
+        else console.log('ItemRowNo out of range');
+        //check diagonal win//top left to btm right
+        if (ItemRowNo==0 && ItemColumnNo==0)
+        {
+            if (class2d[ItemRowNo][ItemColumnNo]==PlayerTurn && class2d[ItemRowNo+1][ItemColumnNo+1]==PlayerTurn &&
+                class2d[ItemRowNo+2][ItemColumnNo+2]==PlayerTurn)
+            {
+                EndGame(PlayerTurn);
+            }
+        }
+        else if (ItemRowNo==1 && ItemColumnNo==1)
+        {
+            if (class2d[ItemRowNo-1][ItemColumnNo-1]==PlayerTurn && class2d[ItemRowNo][ItemColumnNo]==PlayerTurn &&
+                class2d[ItemRowNo+1][ItemColumnNo+1]==PlayerTurn ||
+                class2d[ItemRowNo-1][ItemColumnNo+1]==PlayerTurn && class2d[ItemRowNo][ItemColumnNo]==PlayerTurn &&
+                class2d[ItemRowNo+1][ItemColumnNo-1]==PlayerTurn)//top left to btm right or top right to btm left. predominant if board large
+            {
+                EndGame(PlayerTurn);
+            }
+        }
+        else if (ItemRowNo==2 && ItemColumnNo==2)
+        {
+            if (class2d[ItemRowNo-1][ItemColumnNo-1]==PlayerTurn && class2d[ItemRowNo][ItemColumnNo]==PlayerTurn &&
+                class2d[ItemRowNo-2][ItemColumnNo-2]==PlayerTurn)
+            {
+                EndGame(PlayerTurn);
+            }
+        }
+        //else console.log('ItemRowNo or ItemColumnNo out of range');//will trigger if didnt click diagonal
+        
+        //now top right to btm left
+        if (ItemRowNo==0 && ItemColumnNo==2)
+        {
+            if (class2d[ItemRowNo][ItemColumnNo]==PlayerTurn && class2d[ItemRowNo+1][ItemColumnNo-1]==PlayerTurn &&
+                class2d[ItemRowNo+2][ItemColumnNo-2]==PlayerTurn)
+            {
+                EndGame(PlayerTurn);
+            }
+        }
+        
+        else if (ItemRowNo==2 && ItemColumnNo==0)
+        {
+            if (class2d[ItemRowNo-1][ItemColumnNo+1]==PlayerTurn && class2d[ItemRowNo][ItemColumnNo]==PlayerTurn &&
+                class2d[ItemRowNo-2][ItemColumnNo+2]==PlayerTurn)
+            {
+                EndGame(PlayerTurn);
+            }
+        }
+        //else console.log('ItemRowNo or ItemColumnNo out of range');
+
+        //check draw if not yet won
+        if (isWon==false)
+        {
+            isDraw=true;
+            for (i=0;i<9;i++)
+            {
+                if (classArr[i]=='')
+                {
+                    isDraw=false;
+                    break;
+                }
+            }
+            if (isDraw==true)
+            {
+                DrawGame();
+            }
+
+            if (isDraw==false)
+            {
+                PlayerTurn=='O' ? PlayerTurn='X' : PlayerTurn='O';        
+                DgetidTurn.innerHTML=PlayerTurn+' turn';
+            }
+        }
+        
+    }
+    else
+    {
+        Dgetidmov.innerHTML='invalid move';
+        setTimeout(()=>{Dgetidmov.innerHTML='';}, 1000);
+        document.getElementById('invalid').play();
+    }
+}
+
+function AddEL() {
+    document.querySelectorAll('.cell').forEach(cell => cell.addEventListener('click', Move));
+    const AllAudio = document.getElementsByTagName('audio');
+    for (i=0;i<AllAudio.length;i++)
+    {
+        AllAudio[i].addEventListener('play', Playing);
+    }
+}
+AddEL();
+
+function RemoveEL() {
+    document.querySelectorAll('.cell').forEach(cell => cell.removeEventListener('click', Move));
+}
+function EndGame(PlayerTurn)
+{
+    DgetidTurn.innerHTML=PlayerTurn+' WINS!';
+    isWon=true;
+    document.getElementById('leg').play();
+    RemoveEL();
+}
+
+function DrawGame()
+{
+    DgetidTurn.innerHTML='DRAW';
+    document.getElementById('Dr').play();
+    RemoveEL();
+}
+
+function Reset() {
+    document.getElementById('Rep').play();
+    PlayerTurn='O';
+    document.querySelectorAll('.cell').forEach(cell => cell.innerHTML='');
+    AddEL();
+    DgetidTurn.innerHTML=PlayerTurn+' turn';
+}
+    
+        
+    
+</script>
+</body>
+</html>
