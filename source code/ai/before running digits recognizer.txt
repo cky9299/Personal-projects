@@ -1,1 +1,0 @@
-Please unzip the custom train img10.rar file into the same directory as github disallows files larger than 25MB from being uploaded.
