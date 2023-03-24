@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>tictactoe</title>
+<!--use px instead of % so dat can resize using zoom-->
+<style>
+.grid-container {
+  display: grid;
+  grid: 140px 140px 140px / 140px 140px 140px;/*row / column*/
+  grid-gap: 1px;
+  background-color: #2196F3;
+  padding: 2px;/*outer box line thickness*/
+  width: 422px;
+}
+
+.grid-container > div {
+  background-color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  padding: 55px 0;/*ensure ele 70px from top ie center*/
+  font-size: 30px;
+}
+</style>
+<audio id='invalid'>
+  <source src="sounds/badmove.ogg" type="audio/ogg">
+  Your browser does not support the audio element.
+</audio>
+
+<audio id='leg'>
+  <source src="sounds/legendary.wav" type="audio/wav">
+</audio>
+
+<audio id='Mo'>
+  <source src="sounds/butterfly_appear.wav" type="audio/wav">
+</audio>
+
+<audio id='Dr'>
+  <source src="sounds/button_mouseleave.wav" type="audio/wav">
+</audio>
+
+<audio id='Rep'>
+  <source src="sounds/replay_popup.wav" type="audio/wav">
+</audio>
+</head>
+
+<body><!--make a reset btn,symbol right of board-->
+<div class="grid-container"><!--default populate row by row eg 0 1 2-->
+    <div data-cell-index="0" class="cell"></div>
+    <div data-cell-index="1" class="cell"></div>
+    <div data-cell-index="2" class="cell"></div>
+    <div data-cell-index="3" class="cell"></div>
+    <div data-cell-index="4" class="cell"></div>
+    <div data-cell-index="5" class="cell"></div>
+    <div data-cell-index="6" class="cell"></div>
+    <div data-cell-index="7" class="cell"></div>
+    <div data-cell-index="8" class="cell"></div>
+</div>
+<button onclick='Reset()'>Reset</button><!--style='display:inline-block;'-->
+<p id='turn'>O turn</p>
+<p id='mov'></p>
+
+<script>
+Dgetidmov=document.getElementById('mov');
+DgetidTurn=document.getElementById('turn')
+    PlayerTurn = 'O';
+    AddEL();
+
+    function AddEL()
+    {
+        document.querySelectorAll('.cell').forEach(cell => cell.addEventListener('click', Move));
+    }
+
+
+function Move(e) {
+    const clickedCell = e.target;
+    const IndexAttr = clickedCell.getAttribute('data-cell-index');
+    ClassToSelect = "[data-cell-index='" + IndexAttr + "']";
+    const DqsItemNo = document.querySelector(ClassToSelect);//'[data-cell-index="box1"]'
+    
+    const ItemNumber = parseInt(IndexAttr);
+    ItemColumnNo=ItemNumber%3;
+    ItemRowNo=Math.floor(ItemNumber/3);
+    isWon=false;
+
+    
+    if (DqsItemNo.innerHTML=='')
+    {
+        document.getElementById('Mo').play();
+        DqsItemNo.innerHTML=PlayerTurn;
+        //get x o from board
+        classArr=[];
+
+        for (i=0;i<9;i++)
+        {
+            NewClassToSelect = "[data-cell-index='" + i + "']";
+            classArr.push(document.querySelector(NewClassToSelect).innerHTML);//O / X / ''
+        }
+        
+        temp1d=[];
+        class2d=[]; //2d arr of board (cont playerturn and blanks)
+        for (j=0;j<3;j++)
+        {
+            for (i=0;i<3;i++)
+            {
+                temp1d.push(classArr[3*j+i]);
+            }
+            class2d.push(temp1d);
+            temp1d=[];
+        }
+        //check win for horizontal (vary column), vertical (vary row), \, /
+        if (class2d[0][0] == PlayerTurn && class2d[0][1] == PlayerTurn && class2d[0][2] == PlayerTurn ||
+            class2d[1][0] == PlayerTurn && class2d[1][1] == PlayerTurn && class2d[1][2] == PlayerTurn ||
+            class2d[2][0] == PlayerTurn && class2d[2][1] == PlayerTurn && class2d[2][2] == PlayerTurn ||
+
+            class2d[0][0] == PlayerTurn && class2d[1][0] == PlayerTurn && class2d[2][0] == PlayerTurn ||
+            class2d[0][1] == PlayerTurn && class2d[1][1] == PlayerTurn && class2d[2][1] == PlayerTurn ||
+            class2d[0][2] == PlayerTurn && class2d[1][2] == PlayerTurn && class2d[2][2] == PlayerTurn ||
+
+            class2d[0][0] == PlayerTurn && class2d[1][1] == PlayerTurn && class2d[2][2] == PlayerTurn ||
+
+            class2d[0][2] == PlayerTurn && class2d[1][1] == PlayerTurn && class2d[2][0] == PlayerTurn)
+            EndGame(PlayerTurn);
+
+        //check draw if not yet won
+        lol: {
+            if (isWon == false) //iswon==true in endgame(playerturn) enables it to skip draw check and swap player turn. hence need not copy paste swap module many times
+            {
+                for (i = 0; i < 9; i++)
+                {
+                    if (classArr[i] == '')
+                    {
+                        PlayerTurn == 'O' ? PlayerTurn = 'X' : PlayerTurn = 'O';
+                        DgetidTurn.innerHTML = PlayerTurn + ' turn';
+                        break lol;
+                    }
+                }
+                DrawGame();
+
+            }
+        }
+        
+    }
+    else
+    {
+        Dgetidmov.innerHTML='invalid move';
+        setTimeout(()=>{Dgetidmov.innerHTML='';}, 1000);
+        document.getElementById('invalid').play();
+    }
+}
+
+
+
+function RemoveEL() {
+    document.querySelectorAll('.cell').forEach(cell => cell.removeEventListener('click', Move));
+}
+function EndGame(PlayerTurn) //print playerturn wins, set iswon to true, play sound, remove el
+{
+    DgetidTurn.innerHTML=PlayerTurn+' WINS!';
+    isWon=true;
+    document.getElementById('leg').play();
+    RemoveEL();
+}
+
+function DrawGame()
+{
+    DgetidTurn.innerHTML='DRAW';
+    document.getElementById('Dr').play();
+    RemoveEL();
+}
+
+function Reset() {
+    document.getElementById('Rep').play();
+    PlayerTurn='O';
+    document.querySelectorAll('.cell').forEach(cell => cell.innerHTML='');
+    AddEL();
+    DgetidTurn.innerHTML=PlayerTurn+' turn';
+}
+    
+        
+    
+</script>
+</body>
+</html>

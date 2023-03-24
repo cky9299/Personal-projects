@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>C4 connect 4</title>
+<style>/*6x7*/
+    .grid-container {
+        display: grid; /*gen a grid of specified dimensions and spacing*/
+        grid: 100px 100px 100px 100px 100px 100px / 100px 100px 100px 100px 100px 100px 100px; /*row / column.*/
+        grid-gap: 1px;
+        background-color: #2196F3;
+        padding: 2px; /*outer box line thickness*/
+        width: 706px;
+    }
+
+.grid-container > div {
+  background-color: rgba(255, 255, 255, 0.8);
+  /*text-align: center;*/
+  padding: 10px 10px 0; /*top right btm left*/
+  /*font-size: 30px;*/
+}
+</style>
+
+<audio id='god'>
+  <source src="sounds/god.wav" type="audio/wav">
+</audio>
+
+<audio id='flush'>
+  <source src="sounds/poker_flush.wav" type="audio/wav">
+</audio>
+
+<audio id='mov'>
+  <source src="sounds/button_press.wav" type="audio/wav">
+</audio>
+
+<audio id='badmov'>
+  <source src="sounds/badmove.ogg" type="audio/ogg">
+</audio>
+
+<audio id='res'>
+  <source src="sounds/rewind.wav" type="audio/wav">
+</audio>
+
+<audio id='over'>
+  <source src="sounds/tooltip.wav" type="audio/wav">
+</audio>
+
+<audio id='dr'>
+  <source src="sounds/button_mouseleave.wav" type="audio/wav">
+</audio>
+
+
+</head>
+
+<body>
+<div class="grid-container"></div>
+
+<button onclick='Reset()'>Reset</button>
+<p id='turn'></p>
+<p id='invalid'></p>
+
+<script>
+const P1 = 'RED';
+const P2 = 'GREEN';
+PlayerTurn=P1;
+document.getElementById('turn').innerHTML = P1 + ' turn';
+
+for (i=0;i<42;i++)
+{
+    const divNode=document.createElement('div');
+    divNode.setAttribute('id', i);
+    document.querySelector(".grid-container").appendChild(divNode);
+}
+    AddEL();
+
+    function AddEL()
+    {
+        for (i = 0; i < 42; i++)//forEach
+        {
+            document.getElementById(i).addEventListener('mouseover', HoverColor);//change color of whole column
+            document.getElementById(i).addEventListener('mouseout', OutColor);
+            document.getElementById(i).addEventListener('click', Move);
+        }
+    }
+
+function HoverColor(e) {
+    document.getElementById('over').play();//play sound on trigger
+    const Tag = e.target;
+    const TagName = Tag.tagName;
+    if (TagName==='circle')//tagname. if user clicks on alr rendered circle or svg
+    {
+        //refer parent ie div id
+        //console.log(Tag.parentElement);
+        IDAttr = Tag.parentElement.parentElement.getAttribute('id');
+    }
+    else if (TagName==='svg')
+    {
+        IDAttr = Tag.parentElement.getAttribute('id');
+    }
+    else
+    {
+        IDAttr = Tag.getAttribute('id');
+    }
+    ColumnNo=IDAttr%7;// eg [1][3]=10. 10%7=3 hence column=3
+    for (i=0;i<6;i++)
+    {
+        const IndexToChangeColor = ColumnNo+7*i;
+        document.getElementById(IndexToChangeColor).style.backgroundColor='rgba(255, 153, 51, 0.8)';
+    }
+}
+
+function OutColor(e) {
+    const Tag = e.target;
+    const TagName = Tag.tagName;
+    if (TagName==='circle')//tagname. if user clicks on alr rendered circle or svg
+    {
+        //refer parent ie div id
+        //console.log(Tag.parentElement);
+        IDAttr = Tag.parentElement.parentElement.getAttribute('id');
+    }
+    else if (TagName==='svg')
+    {
+        IDAttr = Tag.parentElement.getAttribute('id');
+    }
+    else
+    {
+        IDAttr = Tag.getAttribute('id');
+    }
+    ColumnNo=IDAttr%7;// eg [1][3]=10. 10%7=3 hence column=3
+    for (i=0;i<6;i++)
+    {
+        const IndexToChangeColor = ColumnNo+7*i;
+        document.getElementById(IndexToChangeColor).style.backgroundColor='rgba(255, 255, 255, 0.8)';
+    }    
+}
+
+    function Move(e)
+    {
+        const Tag = e.target;
+        const TagName = Tag.tagName;
+        if (TagName === 'circle')//tagname. if user clicks on alr rendered circle or svg
+        {
+            //refer parent ie div id
+            //console.log(Tag.parentElement);
+            IDAttr = Tag.parentElement.parentElement.getAttribute('id');
+        }
+        else if (TagName === 'svg')
+        {
+            IDAttr = Tag.parentElement.getAttribute('id');
+        }
+        else
+        {
+            IDAttr = Tag.getAttribute('id');
+        }
+        ColumnNo = IDAttr % 7;// eg [1][3]=10. 10%7=3 hence column=3
+
+        var Index;
+        ColumnIsBlank = false;
+        isWon = false;
+        for (i = 0; i < 6; i++) //check whether this column is blank
+        {
+            Index = ColumnNo + 35 - 7 * i; //btm to top. index = last row index - 1 row
+            if (!document.getElementById(Index).children[0])//0 if column blank
+            {
+                ColumnIsBlank = true;
+                break;
+            }
+        }
+
+        if (ColumnIsBlank == true)//Index now contains the first blank sq ie right above token
+        {
+            document.getElementById('mov').play();
+            DefSvg(PlayerTurn, Index);
+            //after move check winner. get board    
+            temp1d = [];
+            svg2d = [];
+            for (j = 0; j < 6; j++)
+            {
+                for (i = 0; i < 7; i++)
+                {
+                    EleToGet = 7 * j + i;
+                    //document.getElementById(EleToGet).children[0] is svg if exists
+                    if (document.getElementById(EleToGet).children[0])
+                    {
+                        if (document.getElementById(EleToGet).children[0].children[0].getAttribute('fill') === 'red')
+                        {
+                            temp1d.push(1);//player 1
+                        }
+                        else if (document.getElementById(EleToGet).children[0].children[0].getAttribute('fill') === 'rgb(0, 204, 153)')
+                        {
+                            temp1d.push(2);//player 2
+                        }
+                        else console.log('player no err when getting svg children');
+                    }
+                    else //svg undefined aka sq empty
+                    {
+                        temp1d.push(0);
+                    }
+                }
+                svg2d.push(temp1d);
+                temp1d = [];
+            }
+
+            var PlayerTurnNo;
+            if (PlayerTurn === P1)
+            {
+                PlayerTurnNo = 1;
+            }
+            else if (PlayerTurn === P2)
+            {
+                PlayerTurnNo = 2;
+            }
+            else console.log('invalid PlayerTurn at PlayerTurnNo');
+            //check horizontal win. for each row: vary column
+
+            for (r = 0; r < 6; r++)
+            {
+                for (c = 0; c < 4; c++)
+                {
+
+                    if (svg2d[r][c] === PlayerTurnNo && svg2d[r][c + 1] === PlayerTurnNo && svg2d[r][c + 2] === PlayerTurnNo && svg2d[r][c + 3] === PlayerTurnNo)
+                    {
+                        Win(PlayerTurn);
+                        break;
+                    }
+
+
+                }
+            }
+            //vertical win
+            for (r = 0; r < 3; r++)
+            {
+                for (c = 0; c < 7; c++)
+                {
+                    if (svg2d[r][c] === PlayerTurnNo && svg2d[r + 1][c] === PlayerTurnNo && svg2d[r + 2][c] === PlayerTurnNo && svg2d[r + 3][c] === PlayerTurnNo)
+                    {
+                        Win(PlayerTurn);
+                        break;
+                    }
+                }
+            }
+            //diagonal win. '\'
+            for (r = 0; r < 3; r++)
+            {
+                for (c = 0; c < 4; c++)
+                {
+                    if (svg2d[r][c] === PlayerTurnNo && svg2d[r + 1][c + 1] === PlayerTurnNo && svg2d[r + 2][c + 2] === PlayerTurnNo && svg2d[r + 3][c + 3] === PlayerTurnNo)
+                    {
+                        Win(PlayerTurn);
+                        break;
+                    }
+                }
+            }
+
+            //diagonal win. '/' top right to btm left
+            for (r = 0; r < 3; r++)
+            {
+                for (c = 6; c >= 0; c--)
+                {
+                    if (svg2d[r][c] === PlayerTurnNo && svg2d[r + 1][c - 1] === PlayerTurnNo && svg2d[r + 2][c - 2] === PlayerTurnNo && svg2d[r + 3][c - 3] === PlayerTurnNo)
+                    {
+                        Win(PlayerTurn);
+                        break;
+                    }
+                }
+            }
+
+            if (isWon == false)
+            {
+                isDraw = true;
+                for (i = 0; i < 42; i++)
+                {
+                    if (!document.getElementById(i).children[0]) //if blank
+                    {
+                        isDraw = false;
+                        break;
+                    }
+                }
+
+
+                if (isDraw == true)
+                {
+                    Draw();
+                }
+                else //if not win and not draw
+                {
+                    PlayerTurn === P1 ? PlayerTurn = P2 : PlayerTurn = P1;
+                    document.getElementById('turn').innerHTML = PlayerTurn + ' turn';
+                }
+            }
+        }
+        else
+        {
+            document.getElementById('badmov').play();
+            document.getElementById('invalid').innerHTML = 'invalid move';
+            setTimeout(() => { document.getElementById('invalid').innerHTML = ''; }, 1000);
+        }
+    }
+
+
+function DefSvg(PlayerTurn, Index) {
+    if (PlayerTurn===P1)
+    {
+        const SvgTag=document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        SvgTag.setAttribute('width', 80);
+        SvgTag.setAttribute('height', 80);
+        const Circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        Circle.setAttribute('cx', 40);
+        Circle.setAttribute('cy', 40);
+        Circle.setAttribute('r', 35);
+        Circle.setAttribute('stroke', 'black');
+        Circle.setAttribute('stroke-width', 2);
+        Circle.setAttribute('fill', 'red');
+        SvgTag.appendChild(Circle);
+        document.getElementById(Index).appendChild(SvgTag);
+    }
+    else if (PlayerTurn===P2)
+    {
+        const SvgTag=document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        SvgTag.setAttribute('width', 80);
+        SvgTag.setAttribute('height', 80);
+        const Circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        Circle.setAttribute('cx', 40);
+        Circle.setAttribute('cy', 40);
+        Circle.setAttribute('r', 35);
+        Circle.setAttribute('stroke', 'black');
+        Circle.setAttribute('stroke-width', 2);
+        Circle.setAttribute('fill', 'rgb(0, 204, 153)');
+        SvgTag.appendChild(Circle);
+        document.getElementById(Index).appendChild(SvgTag);
+    }
+    else console.log('PlayerTurn error when gen svg');
+}
+
+function RemoveEL() {
+    for (i=0;i<42;i++)//forEach
+    {
+        document.getElementById(i).removeEventListener('mouseover', HoverColor);//change color of whole column
+        //document.getElementById(i).removeEventListener('mouseout', OutColor);
+        document.getElementById(i).removeEventListener('click', Move);
+    }
+}
+
+function Win(PlayerTurn) {
+    document.getElementById('god').play();
+    document.getElementById('turn').innerHTML=PlayerTurn+' WINS!';
+    isWon=true;
+    RemoveEL();
+    setTimeout(()=>{document.getElementById('flush').play();}, 1000);
+}
+
+function Draw() {
+    document.getElementById('dr').play();
+    document.getElementById('turn').innerHTML='DRAW';
+    RemoveEL();
+}
+
+
+function Reset() {
+    document.getElementById('res').play();
+    PlayerTurn=P1;
+    for (i=0;i<42;i++)
+    {
+        if (document.getElementById(i).children[0])//if defined
+        {
+            SvgRemove=document.getElementById(i).children[0];
+            document.getElementById(i).removeChild(SvgRemove);
+        }
+    }
+    AddEL();
+    document.getElementById('turn').innerHTML=PlayerTurn+' turn';
+}
+
+
+</script>
+</body>
+</html>
